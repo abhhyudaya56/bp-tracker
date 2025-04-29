@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BP Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background: #f5f5f5;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 { text-align: center; }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+    }
+    .radio-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 10px;
+      width: 100%;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 6px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>BP Tracker</h2>
+  <label>Date:
+    <input type="date" id="date">
+  </label>
+
+  <label>BP (Systolic/Diastolic):
+    <input type="text" id="bp" placeholder="e.g. 120/80">
+  </label>
+
+  <label>Pulse:
+    <input type="number" id="pulse" placeholder="e.g. 72">
+  </label>
+
+  <label>BP Meds Taken?</label>
+  <div class="radio-group">
+    <label><input type="radio" name="meds" value="Yes"> Yes</label>
+    <label><input type="radio" name="meds" value="No"> No</label>
+  </div>
+
+  <label>Reading Time:</label>
+  <div class="radio-group">
+    <label><input type="radio" name="time" value="Day"> Day</label>
+    <label><input type="radio" name="time" value="Night"> Night</label>
+  </div>
+
+  <button onclick="saveData()">Save Entry</button>
+  <button onclick="downloadCSV()">Download CSV</button>
+
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>BP (S/D)</th>
+        <th>Pulse</th>
+        <th>Meds</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const data = JSON.parse(localStorage.getItem('bpData')) || [];
+
+    function saveData() {
+      const date = document.getElementById('date').value;
+      const bp = document.getElementById('bp').value;
+      const pulse = document.getElementById('pulse').value;
+      const meds = document.querySelector('input[name="meds"]:checked')?.value;
+      const time = document.querySelector('input[name="time"]:checked')?.value;
+
+      if (!date || !bp || !pulse || !meds || !time) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      data.push({ date, bp, pulse, meds, time });
+      localStorage.setItem('bpData', JSON.stringify(data));
+      updateTable();
+      clearInputs();
+    }
+
+    function updateTable() {
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.date}</td><td>${row.bp}</td><td>${row.pulse}</td><td>${row.meds}</td><td>${row.time}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function downloadCSV() {
+      let csv = "Date,BP (S/D),Pulse,Meds,Time\n";
+      data.forEach(row => {
+        csv += `${row.date},${row.bp},${row.pulse},${row.meds},${row.time}\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "bp_readings.csv";
+      link.click();
+    }
+
+    function clearInputs() {
+      document.getElementById('date').value = "";
+      document.getElementById('bp').value = "";
+      document.getElementById('pulse').value = "";
+      document.querySelectorAll('input[name="meds"]').forEach(e => e.checked = false);
+      document.querySelectorAll('input[name="time"]').forEach(e => e.checked = false);
+    }
+
+    // Load table on page load
+    updateTable();
+  </script>
+</body>
+</html>
